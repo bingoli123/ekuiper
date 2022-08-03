@@ -52,14 +52,7 @@ func InitManager() (*Manager, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if singleton == nil {
-		dir := "etc/services"
-		if kconf.IsTesting {
-			dir = "service/test"
-		}
-		etcDir, err := kconf.GetLoc(dir)
-		if err != nil {
-			return nil, fmt.Errorf("cannot find etc/services folder: %s", err)
-		}
+		etcDir := kconf.Config.Service.DataRoot + "/etc"
 		err, sdb := store.GetKV("services")
 		if err != nil {
 			return nil, fmt.Errorf("cannot open service db: %s", err)

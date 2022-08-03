@@ -30,7 +30,7 @@ import (
 )
 
 func TestSinkTemplate_Apply(t *testing.T) {
-	conf.InitConf()
+	conf.InitConsulConf(nil)
 	transform.RegisterAdditionalFuncs()
 	var tests = []struct {
 		config map[string]interface{}
@@ -128,7 +128,7 @@ func TestSinkTemplate_Apply(t *testing.T) {
 }
 
 func TestOmitEmpty_Apply(t *testing.T) {
-	conf.InitConf()
+	conf.InitConsulConf(nil)
 	var tests = []struct {
 		config map[string]interface{}
 		data   []map[string]interface{}

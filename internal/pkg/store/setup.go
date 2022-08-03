@@ -38,10 +38,6 @@ func SetupDefault() error {
 }
 
 func SetupWithKuiperConfig(kconf *conf.KuiperConf) error {
-	dir, err := conf.GetDataLoc()
-	if err != nil {
-		return err
-	}
 	c := definition.Config{
 		Type: kconf.Store.Type,
 		Redis: definition.RedisConfig{
@@ -51,7 +47,7 @@ func SetupWithKuiperConfig(kconf *conf.KuiperConf) error {
 			Timeout:  kconf.Store.Redis.Timeout,
 		},
 		Sqlite: definition.SqliteConfig{
-			Path: dir,
+			Path: kconf.Service.DataRoot + "/data",
 			Name: kconf.Store.Sqlite.Name,
 		},
 	}

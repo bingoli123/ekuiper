@@ -16,6 +16,7 @@ require (
 	github.com/go-redis/redis/v7 v7.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/godror/godror v0.33.0
+	github.com/google/uuid v1.3.0
 	github.com/googleapis/go-sql-spanner v0.0.0-20220321120010-12780e57be1c
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
 	github.com/jackc/pgx/v4 v4.16.0
@@ -33,6 +34,7 @@ require (
 	github.com/prestodb/presto-go-client v0.0.0-20211201125635-ad28cec17d6c
 	github.com/sijms/go-ora/v2 v2.4.16
 	github.com/snowflakedb/gosnowflake v1.6.9
+	github.com/streadway/amqp v1.0.0
 	github.com/taosdata/driver-go/v2 v2.0.0
 	github.com/thda/tds v0.1.7
 	github.com/trinodb/trino-go-client v0.300.0
@@ -113,7 +115,6 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect

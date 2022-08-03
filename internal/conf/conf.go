@@ -15,13 +15,15 @@
 package conf
 
 import (
+	"errors"
 	"fmt"
 	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/lf-edge/ekuiper/pkg/api"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	"io"
+	"io/ioutil"
 	"os"
-	"path"
 	"time"
 )
 
@@ -37,7 +39,67 @@ type tlsConf struct {
 	Keyfile  string `yaml:"keyfile"`
 }
 
+type DomainInfo struct {
+	DomainUid   string `yaml:"domain_uid"`
+	DomainName  string `yaml:"domain_name"`
+	LocalDomain bool   `yaml:"local_domain"`
+	Lines       []struct {
+		Ipv4       string `yaml:"ipv4"`
+		PortConfig []struct {
+			Usage string `yaml:"usage"`
+			Ports []int  `yaml:"ports"`
+		} `yaml:"port_config"`
+	} `yaml:"lines"`
+}
+
+type KongLocalAddr struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
+
+type KongLocal struct {
+	Manage      KongLocalAddr `yaml:"manage"`
+	Internal    KongLocalAddr `yaml:"internal"`
+	External    KongLocalAddr `yaml:"external"`
+	KongPlugins []string      `yaml:"plugins"`
+}
+
 type KuiperConf struct {
+	ServiceUid       string `yaml:"service_uid"`
+	ConsulConnection struct {
+		Enable         bool   `yaml:"enable"`
+		Host           string `yaml:"host"`
+		Port           int    `yaml:"port"`
+		Datacenter     string `yaml:"datacenter"`
+		PropertyKvPath string `yaml:"property_kv_path"`
+	} `yaml:"consul_connection"`
+
+	Service struct {
+		NodeHost string `yaml:"node_host"`
+		DataRoot string `yaml:"data_root"`
+	} `yaml:"service"`
+
+	Domains struct {
+		Remote string       `yaml:"remote"`
+		Local  []DomainInfo `yaml:"local"`
+	} `yaml:"domains"`
+
+	Kong struct {
+		Remote string    `yaml:"remote"`
+		Local  KongLocal `yaml:"local"`
+	} `yaml:"kong"`
+
+	Log struct {
+		Enable         bool   `yaml:"enable"`
+		Level          string `yaml:"level"`
+		Mode           string `yaml:"mode"`
+		FilesPath      string `yaml:"files_path"`
+		RotationCount  int    `yaml:"rotation_count"`
+		RotationSize   int    `yaml:"rotation_size"`
+		RotationPeriod string `yaml:"rotation_period"`
+		Compression    bool   `yaml:"compression"`
+	} `yaml:"log"`
+
 	Basic struct {
 		Debug          bool     `yaml:"debug"`
 		ConsoleLog     bool     `yaml:"consoleLog"`
@@ -54,13 +116,16 @@ type KuiperConf struct {
 		PluginHosts    string   `yaml:"pluginHosts"`
 		Authentication bool     `yaml:"authentication"`
 		IgnoreCase     bool     `yaml:"ignoreCase"`
-	}
-	Rule api.RuleOption
+	} `yaml:"basic"`
+
+	Rule api.RuleOption `yaml:"rule"`
+
 	Sink struct {
 		CacheThreshold    int  `yaml:"cacheThreshold"`
 		CacheTriggerCount int  `yaml:"cacheTriggerCount"`
 		DisableCache      bool `yaml:"disableCache"`
-	}
+	} `yaml:"sink"`
+
 	Store struct {
 		Type  string `yaml:"type"`
 		Redis struct {
@@ -73,17 +138,23 @@ type KuiperConf struct {
 		Sqlite struct {
 			Name string `yaml:"name"`
 		}
-	}
+	} `yaml:"store"`
+
 	Portable struct {
 		PythonBin string `yaml:"pythonBin"`
-	}
+	} `yaml:"portable"`
 }
 
-func InitConf() {
-	cpath, err := GetConfLoc()
+func InitConsulConf(confFile *string) error {
+	if nil == confFile {
+		panic(errors.New("config file is null"))
+	}
+
+	b, err := ioutil.ReadFile(*confFile)
 	if err != nil {
 		panic(err)
 	}
+
 	kc := KuiperConf{
 		Rule: api.RuleOption{
 			LateTol:            1000,
@@ -94,12 +165,28 @@ func InitConf() {
 		},
 	}
 
-	err = LoadConfigFromPath(path.Join(cpath, ConfFileName), &kc)
-	if err != nil {
-		Log.Fatal(err)
-		panic(err)
+	if e := yaml.Unmarshal(b, &kc); e != nil {
+		return e
 	}
+
 	Config = &kc
+
+	return nil
+}
+
+func InitKuiperPropertyConf(confFile *string, kuiperPropertyData []byte) error {
+	if 0 == len(kuiperPropertyData) && nil != confFile {
+		b, err := ioutil.ReadFile(*confFile)
+		if err != nil {
+			panic(err)
+		}
+		kuiperPropertyData = b
+	}
+
+	if e := yaml.Unmarshal(kuiperPropertyData, Config); e != nil {
+		return e
+	}
+
 	if 0 == len(Config.Basic.Ip) {
 		Config.Basic.Ip = "0.0.0.0"
 	}
@@ -112,12 +199,7 @@ func InitConf() {
 	}
 
 	if Config.Basic.FileLog {
-		logDir, err := GetLoc(logDir)
-		if err != nil {
-			Log.Fatal(err)
-		}
-
-		file := path.Join(logDir, logFileName)
+		file := Config.Log.FilesPath + "/" + logFileName
 		logWriter, err := rotatelogs.New(
 			file+".%Y-%m-%d_%H-%M-%S",
 			rotatelogs.WithLinkName(file),
@@ -147,6 +229,8 @@ func InitConf() {
 	if Config.Portable.PythonBin == "" {
 		Config.Portable.PythonBin = "python"
 	}
+
+	return nil
 }
 
 func init() {

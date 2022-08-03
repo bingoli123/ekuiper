@@ -190,22 +190,15 @@ func getSourceConf(ctx api.StreamContext, sourceType string, options *ast.Option
 	props := make(map[string]interface{})
 	cfg := make(map[string]interface{})
 	err := conf.LoadConfigByName(confPath, &cfg)
+	logger.Infof("get source conf path=%s, cfg=%+v", confPath, cfg)
 	if err != nil {
 		logger.Warnf("fail to parse yaml for source %s. Return an empty configuration", sourceType)
 	} else {
-		def, ok := cfg["default"]
-		if !ok {
-			logger.Warnf("default conf is not found", confkey)
-		} else {
-			if def1, ok1 := def.(map[string]interface{}); ok1 {
-				props = def1
-			}
-			if c, ok := cfg[strings.ToLower(confkey)]; ok {
-				if c1, ok := c.(map[string]interface{}); ok {
-					c2 := c1
-					for k, v := range c2 {
-						props[k] = v
-					}
+		if c, ok := cfg[strings.ToLower(confkey)]; ok {
+			if c1, ok := c.(map[string]interface{}); ok {
+				c2 := c1
+				for k, v := range c2 {
+					props[k] = v
 				}
 			}
 		}
@@ -215,6 +208,6 @@ func getSourceConf(ctx api.StreamContext, sourceType string, options *ast.Option
 		f = "json"
 	}
 	props["format"] = strings.ToLower(f)
-	logger.Debugf("get conf for %s with conf key %s: %v", sourceType, confkey, printable(props))
+	logger.Infof("get conf for %s with conf key %s: %v", sourceType, confkey, printable(props))
 	return props
 }

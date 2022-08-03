@@ -28,7 +28,7 @@ func Errstring(err error) string {
 }
 
 func InitEnv() {
-	conf.InitConf()
+	conf.InitConsulConf(nil)
 	err := store.SetupDefault()
 	if err != nil {
 		conf.Log.Fatal(err)

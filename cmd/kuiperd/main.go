@@ -14,13 +14,23 @@
 
 package main
 
-import "github.com/lf-edge/ekuiper/internal/server"
+import (
+	"flag"
+	"github.com/lf-edge/ekuiper/internal/server"
+)
 
 var (
 	Version      = "unknown"
 	LoadFileType = "relative"
 )
 
+var (
+	confFile = flag.String("c", "config.yml", "configure filename")
+)
+
+func init() {
+	flag.Parse()
+}
 func main() {
-	server.StartUp(Version, LoadFileType)
+	server.StartUp(confFile, Version, LoadFileType)
 }

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.inspur.com/role: stable
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "kuiperd.fullname" . }}
+  labels:
+{{- include "kuiperd.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+{{ include "kuiperd.labels" . | indent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/configmap.yaml: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+{{ include "kuiperd.labels" . | indent 8 }}
+    spec:
+      imagePullSecrets:
+      {{- range .Values.image.imagePullSecrets }}
+      - name: {{ . }}
+      {{- end }}
+      hostname: kuiperd
+      volumes:
+      - name: kuiperd-cfg
+        configMap:
+          name: {{ template "kuiperd.fullname" . }}
+          items:
+          - key: env-config
+            path: config.yml
+      {{- if eq "host" (lower .Values.Kuiperd.persistentMode) }}
+      - name: kuiperd-log
+        hostPath:
+          path: /var/log/components/kuiperd/{{- .Values.Kuiperd.service_uid }}
+      {{- else if eq "pv" (lower .Values.Kuiperd.persistentMode) }}
+      - name: kuiperd-log
+        persistentVolumeClaim:
+          claimName: {{ template "kuiperd.fullname" . }}
+      {{- end }}
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.Kuiperd.nodeName }}
+      containers:
+      - name: kuiperd
+        image: "{{ .Values.global.registry }}/{{ .Values.image.Kuiperd.name }}{{ .Values.global.arch }}:{{ .Values.image.Kuiperd.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+        - name: kuiperd-cfg
+          mountPath: /opt/components/kuiperd/configs/config.yml
+          subPath: config.yml
+        {{- if or (eq "host" (lower .Values.Kuiperd.persistentMode)) (eq "pv" (lower .Values.Kuiperd.persistentMode)) }}
+        - name: kuiperd-log
+          mountPath: /var/log/components/kuiperd/{{- .Values.Kuiperd.service_uid }}
+        {{- end }}

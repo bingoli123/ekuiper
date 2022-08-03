@@ -1,10 +1,10 @@
-BUILD_PATH ?= _build
+BUILD_PATH ?= release/kuiperd/
 PACKAGES_PATH ?= _packages
 
-VERSION := $(shell git describe --tags --always)
-ARCH := $(shell go env GOARCH)
-OS := $(shell go env GOOS)
-PACKAGE_NAME := kuiper-$(VERSION)-$(OS)-$(ARCH)
+VERSION := 3.1.0-rc.2
+#ARCH := $(shell go env GOARCH)
+#OS := $(shell go env GOOS)
+PACKAGE_NAME := service
 
 TARGET ?= lfedge/ekuiper
 

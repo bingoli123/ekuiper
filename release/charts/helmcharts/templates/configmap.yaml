@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "kuiperd.fullname" . }}
+data:
+  env-config: |
+    service_uid: {{ .Values.Kuiperd.service_uid }}
+    consul_connection:
+      host: {{ .Values.consul_connection.host }}
+      port: {{ .Values.consul_connection.port }}
+      enable: {{ .Values.consul_connection.enable }}
+      datacenter: {{ .Values.consul_connection.datacenter }}
+      property_kv_path: {{ .Values.consul_connection.property_kv_path }}

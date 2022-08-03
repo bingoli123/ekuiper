@@ -15,7 +15,9 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/lf-edge/ekuiper/internal/binder/function"
 	"github.com/lf-edge/ekuiper/internal/binder/io"
@@ -23,11 +25,15 @@ import (
 	"github.com/lf-edge/ekuiper/internal/conf"
 	"github.com/lf-edge/ekuiper/internal/pkg/store"
 	"github.com/lf-edge/ekuiper/internal/processor"
+	"github.com/lf-edge/ekuiper/internal/server/consul"
 	"github.com/lf-edge/ekuiper/internal/topo/connection/factory"
+	"gopkg.in/yaml.v3"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -40,11 +46,160 @@ var (
 	streamProcessor *processor.StreamProcessor
 )
 
-func StartUp(Version, LoadFileType string) {
+func GetCurrentDirectory() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return ""
+	}
+	return strings.Replace(dir, "\\", "/", -1)
+}
+func StartUp(ConfFile *string, Version, LoadFileType string) {
 	version = Version
 	conf.LoadFileType = LoadFileType
 	startTimeStamp = time.Now().Unix()
-	conf.InitConf()
+	if err := conf.InitConsulConf(ConfFile); err != nil {
+		panic(err)
+	}
+
+	if 0 == len(conf.Config.Service.DataRoot) {
+		conf.Config.Service.DataRoot = GetCurrentDirectory() + "/../"
+	}
+
+	if conf.Config.ConsulConnection.Enable {
+		// get property config
+		if true {
+			var configData []byte
+
+			for 0 == len(configData) {
+				var err error
+				if configData, err = consul.GetValue(conf.Config.ConsulConnection.Host,
+					conf.Config.ConsulConnection.Port,
+					conf.Config.ConsulConnection.Datacenter,
+					conf.Config.ConsulConnection.PropertyKvPath); err != nil {
+					fmt.Printf("get property config from consul[%+v] failed, try again... \n", conf.Config.ConsulConnection)
+					time.Sleep(time.Second * 3)
+				}
+			}
+
+			fmt.Println("get property from consul success")
+			if err := conf.InitKuiperPropertyConf(nil, configData); err != nil {
+				panic(err)
+			}
+		}
+
+		// get kong config
+		if true {
+			var configData []byte
+
+			for 0 == len(configData) {
+				var err error
+				if configData, err = consul.GetValue(conf.Config.ConsulConnection.Host,
+					conf.Config.ConsulConnection.Port,
+					conf.Config.ConsulConnection.Datacenter,
+					conf.Config.Kong.Remote); err != nil {
+					fmt.Printf("get kong config from consul[%+v] failed, try again... \n", conf.Config.ConsulConnection)
+					time.Sleep(time.Second * 3)
+				}
+			}
+
+			if err := json.Unmarshal(configData, &conf.Config.Kong.Local); err != nil {
+				panic(err)
+			}
+
+			fmt.Println("get kong config from consul success")
+		}
+
+		var domainData []byte
+		if false {
+			for 0 == len(domainData) {
+				var err error
+				if domainData, err = consul.GetValue(conf.Config.ConsulConnection.Host,
+					conf.Config.ConsulConnection.Port,
+					conf.Config.ConsulConnection.Datacenter,
+					conf.Config.Domains.Remote); err != nil {
+					fmt.Println("get domain config from consul failed, try again...")
+					time.Sleep(time.Second * 3)
+				}
+			}
+		}
+
+		var domainInfo []conf.DomainInfo
+		if false {
+			if err := yaml.Unmarshal(domainData, &domainInfo); err != nil {
+				panic(err)
+			}
+		}
+
+		if true {
+			// register consul service
+			c := consul.NewConsul()
+
+			var ServiceDomain string
+			if len(domainInfo) > 0 {
+				ServiceDomain = domainInfo[0].DomainUid
+			}
+
+			if err := c.Init(
+				conf.Config.ConsulConnection.Host,
+				conf.Config.ConsulConnection.Port,
+				conf.Config.ConsulConnection.Datacenter,
+				30,
+				60,
+				conf.Config.Service.NodeHost,
+				conf.Config.Basic.RestPort,
+				conf.Config.ServiceUid,
+				"kuiperd",
+				ServiceDomain); err != nil {
+				panic(err)
+			}
+
+			if err := c.RegisterService(); err != nil {
+				panic(err)
+			}
+
+			c.HeartCheck()
+		}
+
+		if true {
+			// reload config data
+			go func() {
+				var property []byte
+
+				for {
+					if propertyDataTmp, err := consul.GetValue(conf.Config.ConsulConnection.Host,
+						conf.Config.ConsulConnection.Port,
+						conf.Config.ConsulConnection.Datacenter,
+						conf.Config.ConsulConnection.PropertyKvPath); err != nil {
+						fmt.Println("reload get property config from consul failed, try again...")
+						time.Sleep(time.Second * 5)
+						continue
+					} else {
+						if 0 == len(property) {
+							property = propertyDataTmp
+						}
+
+						if !bytes.Equal(property, propertyDataTmp) {
+							os.Exit(-1)
+						}
+					}
+
+					time.Sleep(time.Second * 10)
+				}
+			}()
+		}
+	} else {
+		if err := conf.InitKuiperPropertyConf(ConfFile, nil); err != nil {
+			panic(err)
+		}
+	}
+
+	if err := KongInit(conf.Config.Kong.Local.Manage.Host,
+		conf.Config.Kong.Local.Manage.Port,
+		conf.Config.Basic.RestPort,
+		conf.Config.Kong.Local.KongPlugins); err != nil {
+		panic(err)
+	}
+
 	factory.InitClientsFactory()
 
 	err := store.SetupWithKuiperConfig(conf.Config)

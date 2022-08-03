@@ -1,0 +1,7 @@
+apiVersion: v1
+appVersion: "3.1.0-rc.2"
+description: kuiperd service
+keywords:
+- kuiperd
+name: kuiperd
+version: 3.1.0-rc.2

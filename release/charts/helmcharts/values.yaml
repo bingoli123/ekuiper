@@ -1,0 +1,32 @@
+global:
+  arch: ""
+  # 镜像仓库
+  registry: 192.168.202.61
+  storageClassName: cloud-disk-nfs
+
+# 镜像信息
+image:
+  Kuiperd:
+    name: ivideo/components/kuiperd
+    tag: 3.1.0-rc.2
+  pullPolicy: Always
+  # 镜像拉取认证密匙
+  imagePullSecrets: ["service-registry"]
+
+Kuiperd:
+  #服务绑定到那个主机
+  nodeName: k8s-node2
+  #持久化存储方式: 宿主机host、持久卷pv
+  persistentMode: host
+  #日志外挂存储
+  persistentVolume:
+    storage: 20Gi
+  #服务配置
+  service_uid: "165c43d7-e3d9-f7a2-ce70-8a278c45e8f7"
+consul_connection:
+  host: 192.168.204.73
+  port: 10058
+  enable: true
+  datacenter: "ivideo"
+  property_kv_path: "ivideo/kuiperd/165c43d7-e3d9-f7a2-ce70-8a278c45e8f7/property"
+

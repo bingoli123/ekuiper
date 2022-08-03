@@ -1,0 +1,16 @@
+{
+    "Name": "kuiperd",
+    "FullName": "事件规则引擎",
+    "Version": "3.1.0-rc.2",
+    "PackageType": "service",
+    "DeploymentMode": ["install","provision"],
+    "OS": ["linux"],
+    "Cpu": ["x64"],
+    "Description": "事件规则引擎",
+    "MaxInstanceNum": 1,
+    "ServiceDomainName": "Connection",
+    "ServiceDomainFullname": "事件域",
+    "Dependencies": {
+    }
+}
+

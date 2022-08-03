@@ -44,14 +44,9 @@ type Manager struct {
 
 // InitManager must only be called once
 func InitManager() (*Manager, error) {
-	pluginDir, err := conf.GetPluginsLoc()
-	if err != nil {
-		return nil, fmt.Errorf("cannot find plugins folder: %s", err)
-	}
-	etcDir, err := conf.GetConfLoc()
-	if err != nil {
-		return nil, fmt.Errorf("cannot find etc folder: %s", err)
-	}
+	pluginDir := conf.Config.Service.DataRoot + "/plugins"
+
+	etcDir := conf.Config.Service.DataRoot + "/etc"
 	registry := &registry{
 		RWMutex:   sync.RWMutex{},
 		plugins:   make(map[string]*PluginInfo),
@@ -66,7 +61,7 @@ func InitManager() (*Manager, error) {
 		etcDir:    etcDir,
 		reg:       registry,
 	}
-	err = m.syncRegistry()
+	err := m.syncRegistry()
 	if err != nil {
 		return nil, err
 	}

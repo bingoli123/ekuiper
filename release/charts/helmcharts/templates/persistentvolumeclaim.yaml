@@ -1,0 +1,15 @@
+{{- if eq "pv" (lower .Values.Kuiperd.persistentMode) }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "kuiperd.fullname" . }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.Kuiperd.persistentVolume.storage }}
+  storageClassName: {{ .Values.global.storageClassName }}
+{{- end -}}

@@ -1,3 +1,47 @@
+#################################################
+# consul配置信息
+#################################################
+service_uid: {{Local.ServiceUid}}
+
+consul_connection:
+  enable: true
+  host: 127.0.0.1
+  port: 31001
+  datacenter: ivideo
+  property_kv_path: ivideo/kuiperd/{{Local.ServiceUid}}/property
+
+#################################################
+# property配置信息
+#################################################
+service:
+  node_host: {{Node.Host}}
+
+domains:
+  # remote和local二选一, remote的value值和local的内容原则上一致。
+  remote: ivideo/kuiperd/{{Local.ServiceUid}}/domain # consul key value path
+#  local: # 本地网域配置
+#    - domain_uid: main-domain
+#      domain_name: main domain
+#      local_domain: yes
+#      lines:
+#        - ipv4: 127.0.0.1
+#          port_config:
+#            - usage: HTTP
+#              ports: [30400] #port数组，最大长度为2，长度为1时表示单个端口；长度为2时表示端口段，第一个端口为起始端口，第二个端口为结束端口
+
+log:
+  enable: true
+  level: INFO #<FATAL/ERROR/WARN/INFO/DEBUG/TRACE>
+  mode: file # <console/file>
+  files_path: /var/log/components/kuiperd/{{Local.ServiceUid}}/
+  rotation_count: 3
+  rotation_size: 100
+  rotation_period: daily #<daily/weekly/monthly/yearly>
+  compression: true
+
+#################################################
+# kuiper配置信息
+#################################################
 basic:
   # true|false, with debug level, it prints more debug info
   debug: false
@@ -16,7 +60,7 @@ basic:
   # REST service ip
   restIp: 0.0.0.0
   # REST service port
-  restPort: 9081
+  restPort: 30400
   # true|false, when true, will check the RSA jwt token for rest api
   authentication: false
   #  restTls:

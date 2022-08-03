@@ -52,7 +52,7 @@ func (p *Preprocessor) Apply(ctx api.StreamContext, data interface{}, _ *xsql.Fu
 		return fmt.Errorf("expect tuple data type")
 	}
 
-	log.Debugf("preprocessor receive %s", tuple.Message)
+	log.Debugf("preprocessor receive message %+v", tuple.Message)
 	var (
 		result map[string]interface{}
 		err    error

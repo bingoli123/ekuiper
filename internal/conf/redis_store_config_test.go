@@ -65,7 +65,7 @@ func TestRedisStorageConSelector(t *testing.T) {
 		}
 	}
 
-	InitConf()
+	InitConsulConf(nil)
 
 	if Config.Store.Type != "redis" {
 		t.Errorf("env variable should set it to redis")

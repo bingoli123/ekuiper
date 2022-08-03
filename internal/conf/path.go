@@ -40,7 +40,7 @@ var AbsoluteMapping = map[string]string{
 }
 
 func GetConfLoc() (string, error) {
-	return GetLoc(etcDir)
+	return Config.Service.DataRoot + etcDir, nil
 }
 
 func GetDataLoc() (string, error) {

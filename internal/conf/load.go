@@ -32,7 +32,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
@@ -58,29 +57,31 @@ func LoadConfigByName(name string, c interface{}) error {
 }
 
 func LoadConfigFromPath(p string, c interface{}) error {
-	prefix := getPrefix(p)
+	//prefix := getPrefix(p)
+	//prefix := getPrefix(p)
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
 		return err
 	}
-	configMap := make(map[string]interface{})
-	err = yaml.Unmarshal(b, &configMap)
-	if err != nil {
-		return err
-	}
-	configs := normalize(configMap)
-	err = process(configs, os.Environ(), prefix)
-	if err != nil {
-		return err
-	}
-	if _, success := c.(*map[string]interface{}); success {
-		names, err := extractKeysFromJsonIfExists(p)
-		if err != nil {
-			return err
-		}
-		applyKeys(configs, names)
-	}
-	return mapstructure.Decode(configs, c)
+	//configMap := make(map[string]interface{})
+	return yaml.Unmarshal(b, c)
+	//err = yaml.Unmarshal(b, &c)
+	//if err != nil {
+	//	return err
+	//}
+	//configs := normalize(configMap)
+	//err = process(configs, os.Environ(), prefix)
+	//if err != nil {
+	//	return err
+	//}
+	//if _, success := c.(*map[string]interface{}); success {
+	//	names, err := extractKeysFromJsonIfExists(p)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	applyKeys(configs, names)
+	//}
+	//return mapstructure.Decode(configs, c)
 }
 
 func CorrectsConfigKeysByJson(configs map[string]interface{}, jsonFilePath string) error {
